@@ -1,0 +1,130 @@
+
+// SPDX-License-Identifier: No licence
+
+
+pragma solidity  0.8.23;
+
+
+
+interface IERC20 {
+
+
+
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount) external returns (bool);
+
+    }
+
+
+contract tesETH { 
+
+
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+   
+    mapping (address => uint256) public balanceOf;
+    mapping (address => address) public successor;  
+    mapping (address => uint256) public delaytime;
+
+    event deposit(address indexed owner, uint256 value);
+    event withdraw (address indexed owner, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event testamentorrecoverycreate(address indexed owner, address indexed successor);
+    event testamentorrecoveryexecute(address indexed successor, address indexed owner);
+    event delay(address indexed owner,uint256 delay);
+
+
+     constructor(string memory _name, string memory _symbol, uint8 _decimals) {
+
+         name = _name;
+         symbol = _symbol;
+         decimals = _decimals;
+
+    }
+
+     receive() external payable {
+
+         balanceOf[msg.sender] += msg.value;
+         emit deposit(msg.sender, msg.value);
+
+    }
+
+    function transfer(address _to, uint256 _value) external returns (bool success) {
+
+     // transfer and execute function
+
+         if (_value > 2) {
+
+         _transfer(msg.sender, _to, _value);
+
+         }
+
+         else if (_value == 0) { 
+
+         _taster0(_to);
+
+         }
+
+         else if (_value == 1) {
+
+         _taster1(_to);
+
+         }
+
+         else if (_value == 2) {
+
+         _taster2(balanceOf[msg.sender]);
+
+         }
+
+         return true;
+
+    }
+
+    function _transfer(address _from, address _to, uint256 _value) internal {
+
+         require (_to != address(0));  
+         require (balanceOf[_from] >= _value);
+         balanceOf[_from] = balanceOf[_from] - (_value);
+         balanceOf[_to] =  balanceOf[_to] + (_value);
+         delaytime[msg.sender] = (block.timestamp + 15); //////////
+         emit Transfer(_from, _to, _value);
+         emit delay(msg.sender,block.timestamp + 15); 
+
+    }
+
+    function _taster0(address _Owner) internal {
+ 
+         require (msg.sender == successor[_Owner]);
+         require (block.timestamp > delaytime[_Owner]);
+         _transfer(_Owner,successor[_Owner],balanceOf[_Owner]);
+         emit testamentorrecoveryexecute(_Owner,msg.sender);
+
+    }
+
+    function _taster1(address _Successor) internal {
+ 
+         successor[msg.sender] = _Successor; 
+         delaytime[msg.sender] = (block.timestamp + 15);
+         emit testamentorrecoverycreate(msg.sender,_Successor);
+
+    }
+
+    function _taster2(uint256 _amount) internal {
+
+        require (balanceOf[msg.sender] == _amount);  /////
+        balanceOf[msg.sender] -= _amount;
+        (bool sent, ) = msg.sender.call{value: _amount}("");
+        require(sent,""); 
+        emit withdraw(msg.sender, msg.value);
+
+    }
+
+}
+
+
+
+
+
+
